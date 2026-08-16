@@ -1,0 +1,17 @@
+# ── Node 依赖 ──
+node_modules/
+
+# ── 打包产物(pnpm pack 输出,可从源码随时重新生成) ──
+*.tgz
+*.tgz.tmp
+
+# ── .NET 构建输出(host/ 为源码,可重新 dotnet build/publish) ──
+host/bin/
+host/obj/
+host-publish/
+.vs/
+*.user
+
+# ── 日志 / 临时文件 ──
+*.log
+*.tmp
