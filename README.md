@@ -71,23 +71,77 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
     browserPath: 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 ```
 
-## 安装与挂载
+## 打包与安装
 
-1. `pnpm pack` 打包本目录 → `dsh-auto-open-web-0.1.0.tgz`
-   （`prepack` 钩子会自动先编译 WebView2 宿主：执行
-   `dotnet publish host/DshAppWindow.csproj -c Release -o host-publish`
-   把 `host/*.cs` 源码编译为 `host-publish/DshAppWindow.exe` 及 WebView2
-   运行库后再打包；需要本机安装 .NET SDK，cs 源码有改动时无需手动先发布。
-   也可单独运行 `pnpm run build:host` 只编译不打包）
-2. 在 `~/.dsh/profiles/web/package.json` 中：
-   - `dsh.profile.bundles` 追加 `"dsh-auto-open-web"`
-   - `dependencies` 追加 `"dsh-auto-open-web": "file:<本目录>/dsh-auto-open-web-0.1.0.tgz"`
-3. 在 `~/.dsh/profiles/web` 下执行 `pnpm install`
-4. 重启 `dsh web` 生效（客户端 bundle 由 modules 行按 `dsh.client` 声明在启动时
-   扫描进浏览器清单，重启后设置页出现「自动打开网页」卡片）
+本包是**组合包(bundle)**:一个附带配置层的 npm 包——`package.json` 的
+`dsh.bundle` 声明配置层文件(`cordis.patch.yml`),profile 安装它时按包名激活
+插件行。已发布到 **npm registry**(`dsh-auto-open-web@0.1.0`)与 **GitHub**
+（https://github.com/jinsiyu/dsh-auto-open-web，main 分支）。
 
-注意：`dsh web` 启动时 CLI 会把 `file:` 依赖规范化成 `^0.1.0`，运行时不受影响
-（node_modules 里已是安装副本）；如需要保持 lockfile 一致可恢复为 file: 形式。
+### 打包
+
+```bash
+cd dsh-auto-open-web
+pnpm pack          # prepack 钩子自动先编译 WebView2 宿主(dotnet publish),产出 dsh-auto-open-web-0.1.0.tgz
+```
+
+### 安装方式(任选其一)
+
+**方式一:源码 checkout 链接(开发期,改动即时生效)**
+
+```bash
+# 绝对路径,避免 pnpm 自链接
+dsh plugin --profile web add C:\path\to\dsh-auto-open-web
+```
+
+**方式二:tarball(发布产物,推荐交付;无需构建授权)**
+
+```bash
+dsh plugin --profile web add ./dsh-auto-open-web-0.1.0.tgz
+```
+
+**方式三:npm 注册表(发布后)**
+
+```bash
+dsh plugin --profile web add dsh-auto-open-web
+```
+
+**方式四:GitHub 源码安装**
+
+```bash
+dsh plugin --profile web add github:jinsiyu/dsh-auto-open-web#main
+```
+
+### 卸载
+
+```bash
+dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对应配置层
+```
+
+### 效果与层顺序
+
+安装后:pnpm 将包加入 `profiles/web/node_modules`,`dsh` 把
+`dsh-auto-open-web` 追加到 `dsh.profile.bundles`;启动时 bundle 的
+`cordis.patch.yml` 插入插件行(`name: auto-open-web`,按包名解析)。
+重启 `dsh web` 后设置页出现「自动打开网页」卡片(客户端 bundle 由 modules
+行按 `dsh.client` 声明在启动时扫描进浏览器清单)。
+
+生效配置按以下顺序逐层组合(后应用的层按行胜出,整行替换 config 而非深合并):
+每个 bundle 的 patch(按 bundles 列表顺序)→ profile 自己的
+`cordis.patch.yml` → 全局 `$DSH_HOME/cordis.patch.yml` → `--patch` overlay。
+用户可在自己 profile 的 `cordis.patch.yml` 中覆盖本包的行,无需改动包。
+
+### 注意事项
+
+- **npm 包已含 WebView2 宿主编译产物**(prepack 编译后发布);**GitHub
+  main 分支与源码 checkout 方式不含** `host-publish/`(构建产物被
+  .gitignore 忽略):webview2 模式需先在 `node_modules/dsh-auto-open-web`
+  下执行 `pnpm run build:host` 生成(需 .NET SDK);browser 模式无需构建。
+- `@deepseek-ai/cordis` 是 peer 依赖,由 DSH 部署提供;pnpm 安装时的
+  peer 警告可忽略。
+- 若手动编辑 `package.json` 安装(不经 dsh plugin 命令),需同时追加
+  `dependencies` 与 `dsh.profile.bundles` 两项;使用本地 `file:` 依赖时
+  `dsh web` 启动会把 `file:` 规范化成 `^0.1.0`,运行时不受影响。
 
 ## 图标
 
