@@ -32,7 +32,8 @@
     "lib/worker.cjs",
     "host-publish",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "README.en.md"
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"

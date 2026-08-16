@@ -1,5 +1,7 @@
 # dsh-auto-open-web
 
+> English: [README.en.md](README.en.md)
+
 dsh web profile 启动后自动打开独立应用窗口（或网页标签页）的常驻插件，并在
 设置 → 插件配置中提供配置卡片（手动维护浏览器位置等）。
 
