@@ -32,6 +32,9 @@ dsh web profile 启动后自动打开独立应用窗口（或网页标签页）�
    `appWindow: false` 时不自动打开任何窗口。
 
 端口取自 webServer 服务的真实监听值（`--port` 自定义、`--port 0` 均正确）。
+**无需等待**：插件把 webServer 声明为硬依赖（`inject`），Cordis 会等
+webServer 插件 `Service.init()` 完成（HTTP socket 已绑定、端口已写入）后才
+激活本插件，apply 时端口直接可用。
 两种模式都随 DSH 退出而关闭：webview2 宿主监视父进程；browser 专用实例由
 Job Object（强杀也生效）+ 退出清理结束进程树。
 
@@ -57,7 +60,6 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 
 | 字段 | 默认 | 说明 |
 | --- | --- | --- |
-| `timeout` | `10000` | 等待监听端口公布的最大毫秒数 |
 | `appWindow` | `true` | 启动时自动打开独立应用窗口；false 时不自动打开任何窗口 |
 | `windowKind` | `webview2` | `webview2` = WebView2 宿主（独立进程、任务栏 DSH 图标、随 DSH 退出）；`browser` = 浏览器 `--app` 专用实例。所选类型不可用时仅记录日志、不打开 |
 | `exitOnWindowClose` | `false` | **（实验性）**关闭自动打开的窗口时随之退出 DSH（默认关闭；仅 `appWindow` 开启时生效）。窗口进程**正常**退出（用户关闭窗口）时触发 `process.exit(0)`；启动失败/崩溃/被强杀（非 0 退出码）不触发，避免误退出。**设置卡片保存后当前会话即时生效**（退出监听始终注册、行为由实时标志决定），无需重启 DSH |

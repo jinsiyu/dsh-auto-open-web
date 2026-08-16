@@ -35,7 +35,10 @@ selected by `windowKind`:
    `appWindow: false` opens nothing automatically.
 
 The port comes from the real listening value of the webServer service (`--port` overrides and
-`--port 0` both work). Both modes close with DSH: the webview2 host watches the parent process; the
+`--port 0` both work). **No waiting needed**: the plugin declares webServer as a hard dependency
+(`inject`), so Cordis only activates it after the webServer plugin's `Service.init()` completes
+(HTTP socket bound, port written) — the port is directly available in `apply`.
+Both modes close with DSH: the webview2 host watches the parent process; the
 browser dedicated instance is ended by the Job Object (also effective on force-kill) plus exit
 cleanup.
 
@@ -63,7 +66,6 @@ Two equivalent ways:
 
 | Field | Default | Description |
 | --- | --- | --- |
-| `timeout` | `10000` | Max milliseconds to wait for the listening port to be published |
 | `appWindow` | `true` | Automatically open the independent app window on start; `false` opens nothing |
 | `windowKind` | `webview2` | `webview2` = WebView2 host (own process, DSH taskbar icon, exits with DSH); `browser` = dedicated `--app` browser instance. If the selected type is unavailable, only a log entry is written and nothing opens |
 | `exitOnWindowClose` | `false` | **（Experimental）** Exit DSH when the auto-opened window closes (off by default; only effective while `appWindow` is on). Triggered only when the window process exits **normally** (user closes the window) → `process.exit(0)`; startup failures/crashes/force-kills (non-zero exit code) do not trigger, preventing accidental exits. **Takes effect immediately in the current session after saving** (the exit listener is always registered; behavior is driven by a live flag), no restart needed |
