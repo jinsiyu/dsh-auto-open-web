@@ -141,8 +141,6 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
   main 分支与源码 checkout 方式不含** `host-publish/`(构建产物被
   .gitignore 忽略):webview2 模式需先在 `node_modules/dsh-auto-open-web`
   下执行 `pnpm run build:host` 生成(需 .NET SDK);browser 模式无需构建。
-- `@deepseek-ai/cordis` 是 peer 依赖,由 DSH 部署提供;pnpm 安装时的
-  peer 警告可忽略。
 - 若手动编辑 `package.json` 安装(不经 dsh plugin 命令),需同时追加
   `dependencies` 与 `dsh.profile.bundles` 两项;使用本地 `file:` 依赖时
   `dsh web` 启动会把 `file:` 规范化成 `^0.1.2`,运行时不受影响。

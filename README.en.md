@@ -150,8 +150,6 @@ without touching the package.
   `host-publish/` (build artifacts are .gitignore'd): for webview2 mode, run
   `pnpm run build:host` inside `node_modules/dsh-auto-open-web` first (requires the .NET SDK);
   browser mode needs no build.
-- `@deepseek-ai/cordis` is a peer dependency provided by the DSH deployment; pnpm's peer warnings
-  during installation can be ignored.
 - If installing by editing `package.json` manually (not via the `dsh plugin` command), you must add
   both the `dependencies` entry and `dsh.profile.bundles`; when using a local `file:` dependency,
   `dsh web` normalizes `file:` to `^0.1.2` at startup, which does not affect runtime.
