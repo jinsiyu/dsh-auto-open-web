@@ -77,14 +77,14 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 
 本包是**组合包(bundle)**:一个附带配置层的 npm 包——`package.json` 的
 `dsh.bundle` 声明配置层文件(`cordis.patch.yml`),profile 安装它时按包名激活
-插件行。已发布到 **npm registry**(`dsh-auto-open-web@0.1.1`)与 **GitHub**
+插件行。已发布到 **npm registry**(`dsh-auto-open-web@0.1.2`)与 **GitHub**
 （https://github.com/jinsiyu/dsh-auto-open-web，main 分支）。
 
 ### 打包
 
 ```bash
 cd dsh-auto-open-web
-pnpm pack          # prepack 钩子自动先编译 WebView2 宿主(dotnet publish),产出 dsh-auto-open-web-0.1.1.tgz
+pnpm pack          # prepack 钩子自动先编译 WebView2 宿主(dotnet publish),产出 dsh-auto-open-web-0.1.2.tgz
 ```
 
 ### 安装方式(任选其一)
@@ -99,7 +99,7 @@ dsh plugin --profile web add C:\path\to\dsh-auto-open-web
 **方式二:tarball(发布产物,推荐交付;无需构建授权)**
 
 ```bash
-dsh plugin --profile web add ./dsh-auto-open-web-0.1.1.tgz
+dsh plugin --profile web add ./dsh-auto-open-web-0.1.2.tgz
 ```
 
 **方式三:npm 注册表(发布后)**
@@ -143,7 +143,7 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
   peer 警告可忽略。
 - 若手动编辑 `package.json` 安装(不经 dsh plugin 命令),需同时追加
   `dependencies` 与 `dsh.profile.bundles` 两项;使用本地 `file:` 依赖时
-  `dsh web` 启动会把 `file:` 规范化成 `^0.1.1`,运行时不受影响。
+  `dsh web` 启动会把 `file:` 规范化成 `^0.1.2`,运行时不受影响。
 
 ## 图标
 

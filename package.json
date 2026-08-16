@@ -1,6 +1,6 @@
 {
   "name": "dsh-auto-open-web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Open the DSH Web GUI in an app-style WebView2 window on profile start, with a settings card for browser paths",
   "type": "module",
   "main": "lib/index.js",
@@ -30,6 +30,10 @@
     "lib/index.js",
     "lib/client.js",
     "lib/worker.cjs",
+    "lib/paths.js",
+    "lib/platform.js",
+    "lib/win32.js",
+    "lib/posix.js",
     "host-publish",
     "cordis.patch.yml",
     "README.md",
