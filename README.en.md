@@ -86,14 +86,14 @@ whole config; fields not listed fall back to defaults):
 
 This package is a **bundle**: an npm package carrying a configuration layer — `dsh.bundle` in
 `package.json` declares the patch file (`cordis.patch.yml`), and a profile activates the plugin row
-by package name when installed. Published to the **npm registry** (`dsh-auto-open-web@0.1.2`) and
+by package name when installed. Published to the **npm registry** (`dsh-auto-open-web@0.1.3`) and
 **GitHub** (https://github.com/jinsiyu/dsh-auto-open-web, `main` branch).
 
 ### Packaging
 
 ```bash
 cd dsh-auto-open-web
-pnpm pack          # the prepack hook compiles the WebView2 host first (dotnet publish), producing dsh-auto-open-web-0.1.2.tgz
+pnpm pack          # the prepack hook compiles the WebView2 host first (dotnet publish), producing dsh-auto-open-web-0.1.3.tgz
 ```
 
 ### Installation (pick one)
@@ -108,7 +108,7 @@ dsh plugin --profile web add C:\path\to\dsh-auto-open-web
 **Option 2: tarball (published artifact, recommended for delivery; no build permission needed)**
 
 ```bash
-dsh plugin --profile web add ./dsh-auto-open-web-0.1.2.tgz
+dsh plugin --profile web add ./dsh-auto-open-web-0.1.3.tgz
 ```
 
 **Option 3: npm registry (after publishing)**
@@ -150,9 +150,24 @@ without touching the package.
   `host-publish/` (build artifacts are .gitignore'd): for webview2 mode, run
   `pnpm run build:host` inside `node_modules/dsh-auto-open-web` first (requires the .NET SDK);
   browser mode needs no build.
+- This package does not depend on `@deepseek-ai/cordis` (zero code references; the plugin identity
+  comes from the `dsh.bundle` / `dsh.client` fields, and Cordis is provided by the DSH deployment
+  at runtime), so installation produces no peer warnings.
+- **Zero koffi dependency declared**: koffi (driving Windows Job Object / process verification /
+  native file dialog) ships with the **DSH deployment itself** (the official native picker
+  `@deepseek-ai/dsh-host-directory-picker-native` depends on koffi, so the deployment always has
+  it). The plugin resolves it at runtime: normal resolution (profile-installed or manual
+  `pnpm add koffi`) first, then the DSH deployment copy under the Windows global npm layout; if
+  resolution fails, capabilities only degrade (Job Object unavailable → exit / pre-launch cleanup
+  still apply; process verification skipped; native dialog unavailable) with a log entry.
+  **Therefore no platform ever hits koffi build-script blocking** — HarmonyOS and other
+  environments without koffi prebuilds install out of the box, with no `pnpm-workspace.yaml` or
+  other configuration needed; posix platforms use the posix fallback adapter (browser mode works;
+  webview2 / native dialog unavailable), and the platform adapter is loaded conditionally so
+  win32.js is never evaluated on posix.
 - If installing by editing `package.json` manually (not via the `dsh plugin` command), you must add
   both the `dependencies` entry and `dsh.profile.bundles`; when using a local `file:` dependency,
-  `dsh web` normalizes `file:` to `^0.1.2` at startup, which does not affect runtime.
+  `dsh web` normalizes `file:` to `^0.1.3` at startup, which does not affect runtime.
 
 ## Icons
 
