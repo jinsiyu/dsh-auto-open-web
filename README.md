@@ -54,8 +54,9 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
    `browserPath`（浏览器可执行文件，支持「浏览」原生对话框选择；位于窗口类型
    下方，仅选择「浏览器应用窗口」时使能）、
    `exitOnWindowClose`（窗口关闭时退出 DSH，默认关闭）。
-   保存后持久化到
-   settings 文档（命名空间 `auto-open-web`），首次保存后设置值优先于行配置。
+   保存后经**官方 settings 域**（客户端 settingsScope）持久化到
+   settings 文档（命名空间 `auto-open-web`），首次保存后设置值优先于行配置；
+   宿主仅保留「浏览」「测试」辅助路由（官方通道无法覆盖的能力）。
 2. **行配置**（cordis.patch.yml）：作为启动种子，设置卡片保存前生效。
 
 | 字段 | 默认 | 说明 |
@@ -79,14 +80,14 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 
 本包是**组合包(bundle)**:一个附带配置层的 npm 包——`package.json` 的
 `dsh.bundle` 声明配置层文件(`cordis.patch.yml`),profile 安装它时按包名激活
-插件行。已发布到 **npm registry**(`dsh-auto-open-web@0.1.4`)与 **GitHub**
+插件行。已发布到 **npm registry**(`dsh-auto-open-web@0.1.5`)与 **GitHub**
 （https://github.com/jinsiyu/dsh-auto-open-web，main 分支）。
 
 ### 打包
 
 ```bash
 cd dsh-auto-open-web
-pnpm pack          # prepack 钩子自动先编译 WebView2 宿主(dotnet publish),产出 dsh-auto-open-web-0.1.4.tgz
+pnpm pack          # prepack 钩子自动先编译 WebView2 宿主(dotnet publish),产出 dsh-auto-open-web-0.1.5.tgz
 ```
 
 ### 安装方式(任选其一)
@@ -101,7 +102,7 @@ dsh plugin --profile web add C:\path\to\dsh-auto-open-web
 **方式二:tarball(发布产物,推荐交付;无需构建授权)**
 
 ```bash
-dsh plugin --profile web add ./dsh-auto-open-web-0.1.4.tgz
+dsh plugin --profile web add ./dsh-auto-open-web-0.1.5.tgz
 ```
 
 **方式三:npm 注册表(发布后)**
@@ -137,27 +138,25 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 
 ### 注意事项
 
-- **dsh 版本要求**:本插件支持 **dsh `>=0.1.0-rc.7 <0.2.0`**(peer 声明,由 DSH 部署
-  提供,安装无警告)。`settings.plugin.item` 自该版本起为 keyed 插槽,卡片注册
-  同时提供 `id` 与 `key` 以兼容新旧两代 dsh;低于支持范围时宿主启动会记录
-  明确错误日志(提示升级 dsh),卡片可能无法挂载。
+- **本包零 dependencies**:所有运行时依赖均由 **DSH 部署提供**,以 optional
+  peer 声明(安装无警告):
+  - `@deepseek-ai/dsh`(宿主,声明兼容范围 `>=0.1.0-rc.7 <0.2.0`,
+    `settings.plugin.item` 自该版本起为 keyed 插槽,注册需 `options.key`;
+    不做运行时版本检测)
+  - `@deepseek-ai/schemastery`(配置 schema 校验器;运行时解析:常规 import
+    优先,其次 Windows 全局 npm 布局下的 DSH 部署副本)
+  - `koffi`(仅 Windows 的 Job Object / 进程校验 / 原生对话框;同样运行时
+    解析部署副本,失败仅降级)
+  因此任何平台安装都无构建拦截——鸿蒙等无 koffi 预编译的环境开箱即装;
+  posix 平台走 posix 降级适配器(browser 模式可用;webview2 / 原生对话框
+  不可用),且平台适配器按平台条件加载,posix 上完全不求值 win32.js。
 - **npm 包已含 WebView2 宿主编译产物**(prepack 编译后发布);**GitHub
   main 分支与源码 checkout 方式不含** `host-publish/`(构建产物被
   .gitignore 忽略):webview2 模式需先在 `node_modules/dsh-auto-open-web`
   下执行 `pnpm run build:host` 生成(需 .NET SDK);browser 模式无需构建。
-- **本包零 koffi 依赖声明**:koffi(驱动 Windows 的 Job Object / 进程校验 /
-  原生对话框)由 **DSH 部署自带**(官方原生选择器
-  `@deepseek-ai/dsh-host-directory-picker-native` 依赖 koffi,部署必带),
-  插件运行时解析:常规解析(profile 已装/手动 `pnpm add koffi`)优先,
-  其次 Windows 全局 npm 布局下的 DSH 部署副本;解析失败仅降级(Job
-  Object 不可用 → 退出/预清理兜底;进程校验跳过;对话框不可用)并记录
-  日志。**因此任何平台安装都无 koffi 构建拦截**——鸿蒙等无 koffi
-  预编译的环境开箱即装,无需 `pnpm-workspace.yaml` 等额外配置;posix
-  平台走 posix 降级适配器(browser 模式可用;webview2 / 原生对话框
-  不可用),且平台适配器按平台条件加载,posix 上完全不求值 win32.js。
 - 若手动编辑 `package.json` 安装(不经 dsh plugin 命令),需同时追加
   `dependencies` 与 `dsh.profile.bundles` 两项;使用本地 `file:` 依赖时
-  `dsh web` 启动会把 `file:` 规范化成 `^0.1.4`,运行时不受影响。
+  `dsh web` 启动会把 `file:` 规范化成 `^0.1.5`,运行时不受影响。
 
 ## 图标
 
