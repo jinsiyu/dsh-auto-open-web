@@ -3,3 +3,15 @@
 - insert:
     - id: auto-open-web
       name: dsh-auto-open-web
+
+# 本插件用独立应用窗口打开 GUI,替代 DSH 核心(web-app bundle)启动后的
+# 默认浏览器交接,避免同时弹出普通浏览器页面(核心的 openBrowser 默认 true,
+# 会以普通标签页/窗口打开 GUI;插件窗口才是"独立应用窗口")。
+# 补丁按 id 整体替换 config,故逐键重述 web-runtime 原配置,仅把
+# openBrowser 置为 false(trustedHosts 保留 webStartup 提供的原表达式)。
+- id: web-runtime
+  config:
+    openBrowser: false
+    printUrl: true
+    surfaceContext: true
+    trustedHosts: !!js ctx.webStartup.trustedHosts
