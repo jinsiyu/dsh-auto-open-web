@@ -161,13 +161,19 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
   因此任何平台安装都无构建拦截——鸿蒙等无 koffi 预编译的环境开箱即装;
   posix 平台走 posix 降级适配器(browser 模式可用;webview2 / 原生对话框
   不可用),且平台适配器按平台条件加载,posix 上完全不求值 win32.js。
+- **设置卡片 UI 完全自绘**(自 0.1.10 起):不依赖官方任何组件/CSS 模板
+  (不 require `dsh-client-ui-primitives`,不复刻官方样式表),卡片外壳、
+  字段、按钮、输入框、图标全部手写;观感经官方设计令牌变量
+  (`--dsw-alias-*` / `--dsw-static-*`)对齐,浅/深色自动跟随主题。
+  仅使用官方公开的数据/机制接口:`settingsScope`(settings 域)、`slots`
+  (插槽)、`locale`(文案)、`dsh-client-runtime`(快照 store)。
 - **npm 包已含 WebView2 宿主编译产物**(prepack 编译后发布);**GitHub
   main 分支与源码 checkout 方式不含** `host-publish/`(构建产物被
   .gitignore 忽略):webview2 模式需先在 `node_modules/dsh-auto-open-web`
   下执行 `pnpm run build:host` 生成(需 .NET SDK);browser 模式无需构建。
 - 若手动编辑 `package.json` 安装(不经 dsh plugin 命令),需同时追加
   `dependencies` 与 `dsh.profile.bundles` 两项;使用本地 `file:` 依赖时
-  `dsh web` 启动会把 `file:` 规范化成 `^0.1.5`,运行时不受影响。
+  `dsh web` 启动会把 `file:` 规范化成 `^0.1.10`,运行时不受影响。
 
 ## 图标
 

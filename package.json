@@ -1,6 +1,6 @@
 {
   "name": "dsh-auto-open-web",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Open the DSH Web GUI in an app-style WebView2 window on profile start, with a settings card for browser paths",
   "repository": {
     "type": "git",
