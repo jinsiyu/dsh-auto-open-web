@@ -39,6 +39,11 @@ selected by `windowKind`:
    (win32 = `cmd /c start`, darwin = `open`, linux = `xdg-open`).
    `appWindow: false` behaves **exactly like the official core**: the GUI is opened in the
    system default browser (plain tab, official `open` method).
+4. **`--no-open` / SSH sessions (official identical suppression)**: `dsh web --no-open`
+   (`webStartup.openBrowser === false`) or an SSH session (`SSH_CONNECTION`/`SSH_TTY`
+   environment variables, the same source as the official `launchedThroughSsh`) opens
+   **nothing** — the plugin reads the **same source** as the official core (the `webStartup`
+   service provided by web-startup) and suppresses opening the same way.
 
 The port comes from the real listening value of the webServer service (`--port` overrides and
 `--port 0` both work). **No waiting needed**: the plugin declares webServer as a hard dependency
@@ -54,8 +59,9 @@ cleanup.
 > plugin's bundle patch, so the opening behavior is fully owned by the plugin: with
 > `appWindow: true` the app-style window opens and no ordinary browser page pops up; with
 > `appWindow: false` the plugin performs **the same default-browser handoff as the official core**
-> (open package → native platform launch), matching the no-plugin behavior. Uninstalling the
-> plugin restores the official default (or use `dsh web --no-open` to disable it temporarily).
+> (open package → native platform launch), matching the no-plugin behavior. With
+> `dsh web --no-open` (or in an SSH session) the plugin, like the official core, opens
+> nothing. Uninstalling the plugin restores the official default.
 
 ### WebView2 host requirements (webview2 mode only)
 
@@ -164,9 +170,10 @@ without touching the package.
 
 - **Zero dependencies**: every runtime dependency is provided by the **DSH deployment** and
   declared as an optional peer (no install warnings):
-  - `@deepseek-ai/dsh` (the host; declares the compatibility range `>=0.1.0-rc.7 <0.2.0` —
-    `settings.plugin.item` became a keyed slot in that release, registration requires
-    `options.key`; no runtime version check is performed)
+  - `@deepseek-ai/dsh` (the host; declares the compatibility range `>=0.1.0-rc.8 <0.2.0` —
+    rc.8 removed `dsh-client-schema-form` from the client frozen table and introduced
+    `dsh-client-runtime`; the plugin's settings card and opening behavior depend on that
+    release; no runtime version check is performed)
   - `@deepseek-ai/schemastery` (config schema validator; resolved at runtime: normal import
     first, then the DSH deployment copy under the Windows global npm layout)
   - `koffi` (Windows only: Job Object / process verification / native file dialog; same runtime

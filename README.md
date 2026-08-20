@@ -36,6 +36,11 @@ dsh web profile 启动后自动打开独立应用窗口（或网页标签页）�
    linux = `xdg-open`）。
    `appWindow: false` 时**与官方相同**:默认浏览器打开(普通标签页,官方
    open 方式)。
+4. **`--no-open` / SSH 会话（与官方相同的不打开）**：`dsh web --no-open`
+   （webStartup 服务的 `openBrowser === false`）或 SSH 会话（`SSH_CONNECTION`/
+   `SSH_TTY` 环境变量，与官方 `launchedThroughSsh` 同源）时不打开任何
+   窗口/页面——插件读取与官方**同一来源**（web-startup 提供的 webStartup
+   服务）做同样的抑制。
 
 端口取自 webServer 服务的真实监听值（`--port` 自定义、`--port 0` 均正确）。
 **无需等待**：插件把 webServer 声明为硬依赖（`inject`），Cordis 会等
@@ -49,8 +54,9 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 > 安装本插件后，插件的 bundle 补丁会把 `web-runtime.openBrowser` 置为 `false`，
 > 打开行为完全由本插件接管：`appWindow: true` 时打开独立应用窗口，不弹出
 > 普通浏览器页面；`appWindow: false` 时插件执行**与官方核心相同的默认浏览器
-> 交接**（open 包 → 平台原生拉起），行为与未安装插件时一致。卸载插件后恢复
-> 官方默认行为（临时关闭也可用 `dsh web --no-open`）。
+> 交接**（open 包 → 平台原生拉起），行为与未安装插件时一致；`dsh web
+> --no-open`（或 SSH 会话）时与官方一致不打开任何窗口/页面。卸载插件后
+> 恢复官方默认行为。
 
 ### WebView2 宿主要求（仅 webview2 模式）
 
@@ -154,8 +160,9 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 
 - **本包零 dependencies**:所有运行时依赖均由 **DSH 部署提供**,以 optional
   peer 声明(安装无警告):
-  - `@deepseek-ai/dsh`(宿主,声明兼容范围 `>=0.1.0-rc.7 <0.2.0`,
-    `settings.plugin.item` 自该版本起为 keyed 插槽,注册需 `options.key`;
+  - `@deepseek-ai/dsh`(宿主,声明兼容范围 `>=0.1.0-rc.8 <0.2.0`:
+    自 rc.8 起客户端冻结表移除 `dsh-client-schema-form`、引入
+    `dsh-client-runtime`,本插件的设置卡片与打开行为均依赖该版本;
     不做运行时版本检测)
   - `@deepseek-ai/schemastery`(配置 schema 校验器;运行时解析:常规 import
     优先,其次 Windows 全局 npm 布局下的 DSH 部署副本)
