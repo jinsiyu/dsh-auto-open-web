@@ -31,7 +31,12 @@ selected by `windowKind`:
    kills the dedicated instance process tree (matching only our own user-data-dir, never the normal
    browser); instances left behind by a force-kill are cleaned up before the next launch.
 3. If the selected type is unavailable (host missing / browser not found / non-Windows, etc.) →
-   **nothing is opened** (a log entry is written), with no automatic cross-fallback.
+   **falls back to the official default-browser handoff** — the URL is given to the OS default
+   browser (plain tab), so the user can always reach the GUI. The implementation mirrors exactly
+   how the DSH core (web-app bundle) opens the page at startup: it prefers the `open` package
+   shipped with the DSH deployment (win32 = PowerShell Start, darwin = `open`, linux = `xdg-open`);
+   when the package is unavailable it falls back to a native platform launch
+   (win32 = `cmd /c start`, darwin = `open`, linux = `xdg-open`).
    `appWindow: false` opens nothing automatically.
 
 The port comes from the real listening value of the webServer service (`--port` overrides and
@@ -41,6 +46,13 @@ The port comes from the real listening value of the webServer service (`--port` 
 Both modes close with DSH: the webview2 host watches the parent process; the
 browser dedicated instance is ended by the Job Object (also effective on force-kill) plus exit
 cleanup.
+
+> **Relationship with DSH's core browser handoff**: the DSH core (web-app bundle) opens the GUI
+> in the system default browser at startup by default (`openBrowser: true` — a plain tab/window,
+> not an app window). Installing this plugin flips `web-runtime.openBrowser` to `false` via the
+> plugin's bundle patch, so only the plugin's app-style window opens and no ordinary browser page
+> pops up; uninstalling the plugin restores the default behavior (or use `dsh web --no-open`
+> to disable it temporarily).
 
 ### WebView2 host requirements (webview2 mode only)
 
@@ -69,7 +81,7 @@ Two equivalent ways:
 | Field | Default | Description |
 | --- | --- | --- |
 | `appWindow` | `true` | Automatically open the independent app window on start; `false` opens nothing |
-| `windowKind` | `webview2` | `webview2` = WebView2 host (own process, DSH taskbar icon, exits with DSH); `browser` = dedicated `--app` browser instance. If the selected type is unavailable, only a log entry is written and nothing opens |
+| `windowKind` | `webview2` | `webview2` = WebView2 host (own process, DSH taskbar icon, exits with DSH); `browser` = dedicated `--app` browser instance. If the selected type is unavailable, it falls back to the default-browser handoff (official open method, plain tab) |
 | `exitOnWindowClose` | `false` | **（Experimental）** Exit DSH when the auto-opened window closes (off by default; only effective while `appWindow` is on). Triggered only when the window process exits **normally** (user closes the window) → `process.exit(0)`; startup failures/crashes/force-kills (non-zero exit code) do not trigger, preventing accidental exits. **Takes effect immediately in the current session after saving** (the exit listener is always registered; behavior is driven by a live flag), no restart needed |
 | `browserPath` | `''` | Manual browser executable path (single entry, e.g. `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`; used only in browser mode), preferred over the built-in candidates Edge → Chrome; a non-existent path is skipped with a warning. The "Browse" button on the card opens a **native file dialog**: same mechanism as the official workspace directory picker (child process + koffi-driven `IFileOpenDialog`; the dialog is the child's first window and is automatically brought to front; no PowerShell). The "Test" button **actually launches** a dedicated `--app` test instance (separate user-data-dir `~/.dsh/<browser>-test-profile`, never pollutes the real instance): after confirming the browser main process stays alive it reports success, then automatically ends that test process tree after a few seconds of display (exact pid, never touches the real instance; the test instance is also placed in the Job Object when available as an exit safety net); the test uses the currently typed path (works even when unsaved), and failures show the reason |
 
@@ -185,8 +197,8 @@ without touching the package.
 ## Platform support
 
 - Windows: `windowKind: webview2` (default, DSH taskbar icon) or `windowKind: browser` (dedicated
-  `--app` instance); nothing opens if the selected type is unavailable
-- macOS/Linux: `webview2` mode is unavailable (logs and opens nothing); `browser` mode is untested
+  `--app` instance); falls back to the default-browser handoff (official open method, plain tab) if the selected type is unavailable
+- macOS/Linux: `webview2` mode is unavailable (falls back to the default-browser handoff); `browser` mode is untested
   (dedicated `--app` instance)
 
 ## Edge cases
