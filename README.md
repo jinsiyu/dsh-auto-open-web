@@ -27,8 +27,13 @@ dsh web profile 启动后自动打开独立应用窗口（或网页标签页）�
    依赖任何退出事件。另有两层兜底：DSH 正常退出时 `process 'exit'` 结束该
    专用实例的整个进程树（仅匹配我们自己的 user-data-dir，不影响正常浏览器）；
    DSH 被强杀后的残留实例由下次启动前预清理。
-3. 所选类型不可用时（宿主缺失/浏览器找不到/非 Windows 等）→ **不打开任何东西**
-   （记录日志），不自动交叉兜底。
+3. **默认浏览器打开（最后兜底）**：所选类型不可用时（宿主缺失/浏览器找不到/
+   非 Windows 等）→ **降级为官方同款的默认浏览器交接**——把 URL 交给操作系统
+   默认浏览器（普通标签页），保证用户至少能打开 GUI。实现与 DSH 核心
+   （web-app bundle）启动时打开网页的方式一致：优先用 DSH 部署自带的
+   `open` 包（win32 = PowerShell Start，darwin = `open`，linux = `xdg-open`），
+   `open` 包不可用时退回平台原生拉起（win32 = `cmd /c start`，darwin = `open`，
+   linux = `xdg-open`）。
    `appWindow: false` 时不自动打开任何窗口。
 
 端口取自 webServer 服务的真实监听值（`--port` 自定义、`--port 0` 均正确）。
@@ -37,6 +42,12 @@ webServer 插件 `Service.init()` 完成（HTTP socket 已绑定、端口已写�
 激活本插件，apply 时端口直接可用。
 两种模式都随 DSH 退出而关闭：webview2 宿主监视父进程；browser 专用实例由
 Job Object（强杀也生效）+ 退出清理结束进程树。
+
+> **与 DSH 核心浏览器交接的关系**：DSH 核心（web-app bundle）默认会在启动后
+> 用系统默认浏览器打开 GUI（`openBrowser: true`，普通标签页/窗口，非独立窗口）。
+> 安装本插件后，插件的 bundle 补丁会把 `web-runtime.openBrowser` 置为 `false`，
+> 只保留插件的独立应用窗口，不再弹出普通浏览器页面；卸载插件后恢复默认行为
+> （临时关闭也可用 `dsh web --no-open`）。
 
 ### WebView2 宿主要求（仅 webview2 模式）
 
@@ -169,8 +180,8 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 
 ## 平台支持
 
-- Windows：`windowKind: webview2`（默认，任务栏图标 DSH）或 `windowKind: browser`（--app 专用实例）；所选类型不可用则不打开
-- macOS/Linux：`webview2` 模式不可用（会记录日志不打开）；`browser` 模式未测试（--app 专用实例）
+- Windows：`windowKind: webview2`（默认，任务栏图标 DSH）或 `windowKind: browser`（--app 专用实例）；所选类型不可用时降级为默认浏览器打开（官方同款，普通标签页）
+- macOS/Linux：`webview2` 模式不可用（降级为默认浏览器打开）；`browser` 模式未测试（--app 专用实例）
 
 ## 边界情况
 
