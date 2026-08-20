@@ -34,7 +34,8 @@ dsh web profile 启动后自动打开独立应用窗口（或网页标签页）�
    `open` 包（win32 = PowerShell Start，darwin = `open`，linux = `xdg-open`），
    `open` 包不可用时退回平台原生拉起（win32 = `cmd /c start`，darwin = `open`，
    linux = `xdg-open`）。
-   `appWindow: false` 时不自动打开任何窗口。
+   `appWindow: false` 时**与官方相同**:默认浏览器打开(普通标签页,官方
+   open 方式)。
 
 端口取自 webServer 服务的真实监听值（`--port` 自定义、`--port 0` 均正确）。
 **无需等待**：插件把 webServer 声明为硬依赖（`inject`），Cordis 会等
@@ -46,8 +47,10 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 > **与 DSH 核心浏览器交接的关系**：DSH 核心（web-app bundle）默认会在启动后
 > 用系统默认浏览器打开 GUI（`openBrowser: true`，普通标签页/窗口，非独立窗口）。
 > 安装本插件后，插件的 bundle 补丁会把 `web-runtime.openBrowser` 置为 `false`，
-> 只保留插件的独立应用窗口，不再弹出普通浏览器页面；卸载插件后恢复默认行为
-> （临时关闭也可用 `dsh web --no-open`）。
+> 打开行为完全由本插件接管：`appWindow: true` 时打开独立应用窗口，不弹出
+> 普通浏览器页面；`appWindow: false` 时插件执行**与官方核心相同的默认浏览器
+> 交接**（open 包 → 平台原生拉起），行为与未安装插件时一致。卸载插件后恢复
+> 官方默认行为（临时关闭也可用 `dsh web --no-open`）。
 
 ### WebView2 宿主要求（仅 webview2 模式）
 
@@ -72,7 +75,7 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 
 | 字段 | 默认 | 说明 |
 | --- | --- | --- |
-| `appWindow` | `true` | 启动时自动打开独立应用窗口；false 时不自动打开任何窗口 |
+| `appWindow` | `true` | 启动时自动打开独立应用窗口；false 时与官方相同——用系统默认浏览器打开 GUI（普通标签页，官方 open 方式） |
 | `windowKind` | `webview2` | `webview2` = WebView2 宿主（独立进程、任务栏 DSH 图标、随 DSH 退出）；`browser` = 浏览器 `--app` 专用实例。所选类型不可用时仅记录日志、不打开 |
 | `exitOnWindowClose` | `false` | **（实验性）**关闭自动打开的窗口时随之退出 DSH（默认关闭；仅 `appWindow` 开启时生效）。窗口进程**正常**退出（用户关闭窗口）时触发 `process.exit(0)`；启动失败/崩溃/被强杀（非 0 退出码）不触发，避免误退出。**设置卡片保存后当前会话即时生效**（退出监听始终注册、行为由实时标志决定），无需重启 DSH |
 | `browserPath` | `''` | 手动指定的浏览器可执行文件路径（单条，如 `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`；仅浏览器模式使用），优先于内置候选 Edge → Chrome；路径不存在会跳过并告警。设置卡片上的「浏览」按钮弹出**原生文件对话框**：与官方工作区目录选择器同一机制（子进程 + koffi 驱动 IFileOpenDialog，对话框是子进程的第一个窗口，自动置顶；不使用 PowerShell）。「测试」按钮**真实拉起**一个 `--app` 专用测试实例（独立 user-data-dir `~/.dsh/<browser>-test-profile`，不污染正式实例）：确认浏览器主进程存活后报告成功，窗口展示数秒后自动结束该测试进程树（精确 pid，不动正式实例；Job Object 可用时测试实例也加入作业，DSH 退出时兜底）；测试使用当前输入的路径（未保存也能测），失败会显示原因 |

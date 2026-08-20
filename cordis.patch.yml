@@ -9,6 +9,9 @@
 # 会以普通标签页/窗口打开 GUI;插件窗口才是"独立应用窗口")。
 # 补丁按 id 整体替换 config,故逐键重述 web-runtime 原配置,仅把
 # openBrowser 置为 false(trustedHosts 保留 webStartup 提供的原表达式)。
+# openBrowser 关闭后打开行为由插件全权接管:appWindow: true → 独立应用窗口;
+# appWindow: false → 插件执行与官方核心相同的默认浏览器交接(open 包 →
+# 平台原生拉起,普通标签页),行为与未安装本插件时一致。
 - id: web-runtime
   config:
     openBrowser: false

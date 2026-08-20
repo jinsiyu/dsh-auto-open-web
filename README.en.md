@@ -37,7 +37,8 @@ selected by `windowKind`:
    shipped with the DSH deployment (win32 = PowerShell Start, darwin = `open`, linux = `xdg-open`);
    when the package is unavailable it falls back to a native platform launch
    (win32 = `cmd /c start`, darwin = `open`, linux = `xdg-open`).
-   `appWindow: false` opens nothing automatically.
+   `appWindow: false` behaves **exactly like the official core**: the GUI is opened in the
+   system default browser (plain tab, official `open` method).
 
 The port comes from the real listening value of the webServer service (`--port` overrides and
 `--port 0` both work). **No waiting needed**: the plugin declares webServer as a hard dependency
@@ -50,9 +51,11 @@ cleanup.
 > **Relationship with DSH's core browser handoff**: the DSH core (web-app bundle) opens the GUI
 > in the system default browser at startup by default (`openBrowser: true` — a plain tab/window,
 > not an app window). Installing this plugin flips `web-runtime.openBrowser` to `false` via the
-> plugin's bundle patch, so only the plugin's app-style window opens and no ordinary browser page
-> pops up; uninstalling the plugin restores the default behavior (or use `dsh web --no-open`
-> to disable it temporarily).
+> plugin's bundle patch, so the opening behavior is fully owned by the plugin: with
+> `appWindow: true` the app-style window opens and no ordinary browser page pops up; with
+> `appWindow: false` the plugin performs **the same default-browser handoff as the official core**
+> (open package → native platform launch), matching the no-plugin behavior. Uninstalling the
+> plugin restores the official default (or use `dsh web --no-open` to disable it temporarily).
 
 ### WebView2 host requirements (webview2 mode only)
 
@@ -80,7 +83,7 @@ Two equivalent ways:
 
 | Field | Default | Description |
 | --- | --- | --- |
-| `appWindow` | `true` | Automatically open the independent app window on start; `false` opens nothing |
+| `appWindow` | `true` | Automatically open the independent app window on start; `false` matches the official core — the GUI opens in the system default browser (plain tab, official `open` method) |
 | `windowKind` | `webview2` | `webview2` = WebView2 host (own process, DSH taskbar icon, exits with DSH); `browser` = dedicated `--app` browser instance. If the selected type is unavailable, it falls back to the default-browser handoff (official open method, plain tab) |
 | `exitOnWindowClose` | `false` | **（Experimental）** Exit DSH when the auto-opened window closes (off by default; only effective while `appWindow` is on). Triggered only when the window process exits **normally** (user closes the window) → `process.exit(0)`; startup failures/crashes/force-kills (non-zero exit code) do not trigger, preventing accidental exits. **Takes effect immediately in the current session after saving** (the exit listener is always registered; behavior is driven by a live flag), no restart needed |
 | `browserPath` | `''` | Manual browser executable path (single entry, e.g. `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`; used only in browser mode), preferred over the built-in candidates Edge → Chrome; a non-existent path is skipped with a warning. The "Browse" button on the card opens a **native file dialog**: same mechanism as the official workspace directory picker (child process + koffi-driven `IFileOpenDialog`; the dialog is the child's first window and is automatically brought to front; no PowerShell). The "Test" button **actually launches** a dedicated `--app` test instance (separate user-data-dir `~/.dsh/<browser>-test-profile`, never pollutes the real instance): after confirming the browser main process stays alive it reports success, then automatically ends that test process tree after a few seconds of display (exact pid, never touches the real instance; the test instance is also placed in the Job Object when available as an exit safety net); the test uses the currently typed path (works even when unsaved), and failures show the reason |
