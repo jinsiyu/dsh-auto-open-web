@@ -1,18 +1,57 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- 目标:net472 = Windows 10 1803+ / Windows 11 操作系统自带的 .NET Framework,
+       无需安装任何 .NET Core/10 运行时;仅需 WebView2 常青运行时(通常随 Edge 预装)。 -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>DshAppWindow</AssemblyName>
     <RootNamespace>DshAppWindow</RootNamespace>
-    <Version>0.1.5</Version>
+    <Version>0.1.15</Version>
+    <!-- 嵌入 DSH 图标:窗口/任务栏图标的固定兜底(即使 -icon 缓存缺失,
+         WinForms 默认窗图标即 exe 的 ApplicationIcon,不会退化为空白/默认图标)。 -->
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!-- net472 SDK 风格项目不隐式引用 WinForms 程序集,显式声明;
+       System.Web.Extensions 提供内置 JavaScriptSerializer(窗口状态 JSON,零新增依赖)。 -->
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3124.44" />
   </ItemGroup>
+
+  <!-- AnyCPU 需 64 位进程(x64 机器原生 x64,ARM64 机器原生 ARM64);
+       包 targets 只会把 x86 loader 复制到根目录,而 .NET Framework 应用的
+       DLL 搜索按进程架构走,故把三种架构的 loader 复制到 runtimes/<arch>/native,
+       宿主启动时按进程架构 SetDllDirectory(见 Program.cs)。 -->
+  <PropertyGroup>
+    <Prefer32Bit>false</Prefer32Bit>
+    <_Wv2Pkg>$(NuGetPackageRoot)microsoft.web.webview2\1.0.3124.44</_Wv2Pkg>
+  </PropertyGroup>
+  <Target Name="CopyWebView2RuntimeLoaders" AfterTargets="CopyFilesToOutputDirectory;Publish">
+    <PropertyGroup>
+      <_Wv2OutDir Condition="'$(PublishDir)' != ''">$(PublishDir)</_Wv2OutDir>
+      <_Wv2OutDir Condition="'$(_Wv2OutDir)' == ''">$(OutDir)</_Wv2OutDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_Wv2Loader Include="$(_Wv2Pkg)\runtimes\win-x64\native\WebView2Loader.dll">
+        <TargetDir>$(_Wv2OutDir)runtimes\win-x64\native\</TargetDir>
+      </_Wv2Loader>
+      <_Wv2Loader Include="$(_Wv2Pkg)\runtimes\win-x86\native\WebView2Loader.dll">
+        <TargetDir>$(_Wv2OutDir)runtimes\win-x86\native\</TargetDir>
+      </_Wv2Loader>
+      <_Wv2Loader Include="$(_Wv2Pkg)\runtimes\win-arm64\native\WebView2Loader.dll">
+        <TargetDir>$(_Wv2OutDir)runtimes\win-arm64\native\</TargetDir>
+      </_Wv2Loader>
+    </ItemGroup>
+    <Copy SourceFiles="@(_Wv2Loader)" DestinationFiles="@(_Wv2Loader->'%(TargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

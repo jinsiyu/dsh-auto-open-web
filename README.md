@@ -63,7 +63,11 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 - Windows 10 1803+ / Windows 11 / Windows Server 2016+
   （Win7/8.1 已于 2023-01 终止支持，见微软公告）
 - WebView2 Runtime（常青版，通常随 Edge 预装；本机已验证 151.x）
-- .NET 10 运行时（随 SDK 安装；也可改为自包含发布，需时再调）
+- **无 .NET 10 运行时要求**：宿主自 0.1.15 起目标 **.NET Framework 4.7.2**，
+  由 Windows 10 1803+ / Windows 11 **操作系统自带**（Win11 为 4.8.x），
+  无需安装任何 .NET Core/10/自包含运行时。构建机需 .NET SDK 与 .NET
+  Framework 4.x 定位包（随 VS/SDK 安装；无定位包时给 csproj 加
+  `Microsoft.NETFramework.ReferenceAssemblies` NuGet 包）。
 
 ## 配置
 
@@ -191,8 +195,12 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 - **任务栏/窗口图标（WebView2 宿主）**：宿主进程直接设置 `Form.Icon` = 插件生成的
   DSH .ico（`~/.dsh/auto-open-web-icon.ico`），与浏览器任务栏身份机制无关。
   .ico 来源：抓取本机 `favicon.svg`，用 **sharp**（部署自带，运行时向上解析，
-  未声明为依赖）栅格化为 16/32/48/64/128/256 PNG 后组装；sharp 不可用时
-  宿主退回默认窗口图标。
+  未声明为依赖）栅格化为 16/32/48/64/128/256 PNG 后组装。
+- **图标固定策略（自 0.1.14）**：生成的 .ico 一经写盘即**缓存固定**——后续启动
+  检测到缓存存在且非空就直接复用，不再抓取 favicon/栅格化（图标不会因某次
+  favicon 或 sharp 瞬时失败而消失，启动也更快）；仅缓存缺失时生成一次。
+  另有**兜底**：`host/icon.ico`（与缓存同源）已通过 `<ApplicationIcon>`
+  嵌入宿主 exe，即使缓存文件缺失，窗口/任务栏也显示 DSH 图标而非默认图标。
 
 ## 平台支持
 

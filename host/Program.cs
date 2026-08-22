@@ -13,7 +13,9 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Text.Json;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Web.Script.Serialization;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -26,6 +28,7 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        SetUpWebView2Loader();
         string url = Arg(args, "--url") ?? "http://127.0.0.1:3080/";
         string? icon = Arg(args, "--icon");
         int parentPid = int.TryParse(Arg(args, "--parent-pid"), out int pid) ? pid : 0;
@@ -34,6 +37,31 @@ internal static class Program
         Application.Run(new MainForm(url, icon, parentPid));
         return 0;
     }
+
+    /// <summary>
+    /// 按进程架构把 WebView2Loader.dll 的搜索路径指到 runtimes/&lt;arch&gt;/native:
+    /// 包 targets 只向根目录复制 x86 loader,而 .NET Framework 进程在本机架构
+    /// (x64/ARM64)上运行时需要同架构 loader,否则 WebView2 初始化失败。
+    /// </summary>
+    private static void SetUpWebView2Loader()
+    {
+        try
+        {
+            string arch = Environment.Is64BitProcess
+                ? RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "win-arm64" : "win-x64"
+                : "win-x86";
+            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", arch, "native");
+            if (Directory.Exists(dir))
+                SetDllDirectory(dir);
+        }
+        catch
+        {
+            /* 无碍:退回默认 DLL 搜索(根目录 x86 loader) */
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool SetDllDirectory(string lpPathName);
 
     private static string? Arg(string[] args, string name)
     {
@@ -46,7 +74,7 @@ internal static class Program
 
 internal sealed class MainForm : Form
 {
-    /// <summary>窗口状态(大小/位置/最大化)持久化结构。须为 public,System.Text.Json 不支持非公开类型。</summary>
+    /// <summary>窗口状态(大小/位置/最大化)持久化结构。须为 public,JavaScriptSerializer 不支持非公开类型。</summary>
     public sealed class SavedWindowState
     {
         public int Left { get; set; }
@@ -157,7 +185,7 @@ internal sealed class MainForm : Form
         try
         {
             if (!File.Exists(StateFilePath)) return;
-            SavedWindowState? state = JsonSerializer.Deserialize<SavedWindowState>(File.ReadAllText(StateFilePath));
+            SavedWindowState? state = new JavaScriptSerializer().Deserialize<SavedWindowState>(File.ReadAllText(StateFilePath));
             if (state is null || state.Width < MinimumSize.Width || state.Height < MinimumSize.Height) return;
             var bounds = new Rectangle(state.Left, state.Top, state.Width, state.Height);
             bool onScreen = Screen.AllScreens.Any(s => s.WorkingArea.IntersectsWith(bounds));
@@ -189,7 +217,7 @@ internal sealed class MainForm : Form
                 State = WindowState == FormWindowState.Maximized ? "Maximized" : "Normal",
             };
             Directory.CreateDirectory(Path.GetDirectoryName(StateFilePath)!);
-            File.WriteAllText(StateFilePath, JsonSerializer.Serialize(state));
+            File.WriteAllText(StateFilePath, new JavaScriptSerializer().Serialize(state));
         }
         catch
         {

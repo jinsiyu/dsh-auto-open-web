@@ -68,7 +68,11 @@ cleanup.
 - Windows 10 1803+ / Windows 11 / Windows Server 2016+
   (Win7/8.1 reached end of support in 2023-01, see Microsoft announcements)
 - WebView2 Runtime (evergreen, usually preinstalled with Edge; verified with 151.x locally)
-- .NET 10 runtime (installed with the SDK; can be switched to a self-contained publish if needed)
+- **No .NET 10 runtime required**: since 0.1.15 the host targets **.NET Framework 4.7.2**,
+  built into Windows 10 1803+ / Windows 11 (4.8.x on Win11) — no .NET Core/10 runtime or
+  self-contained publish is needed. The build machine needs a .NET SDK and the .NET
+  Framework 4.x targeting packs (installed with VS/SDK; without them add the
+  `Microsoft.NETFramework.ReferenceAssemblies` NuGet package to the csproj).
 
 ## Configuration
 
@@ -201,8 +205,13 @@ without touching the package.
   plugin-generated DSH .ico (`~/.dsh/auto-open-web-icon.ico`), independent of browser taskbar
   identity rules. The .ico is built by fetching the local `favicon.svg` and rasterizing it with
   **sharp** (bundled with the deployment, resolved upward at runtime, not declared as a dependency)
-  into 16/32/48/64/128/256 PNGs; when sharp is unavailable the host falls back to the default window
-  icon.
+  into 16/32/48/64/128/256 PNGs.
+- **Fixed-icon policy (since 0.1.14)**: once written, the .ico is cached and reused — later
+  starts return the existing non-empty cache directly (no favicon fetch / rasterization, so the
+  icon cannot vanish on a transient favicon/sharp failure, and starts are faster); it is
+  generated only when the cache is missing. **Extra safety net**: `host/icon.ico` (same source as
+  the cache) is embedded into the host exe via `<ApplicationIcon>`, so even with a missing cache
+  the window/taskbar shows the DSH icon instead of the default one.
 
 ## Platform support
 
