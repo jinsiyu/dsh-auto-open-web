@@ -68,6 +68,11 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
   无需安装任何 .NET Core/10/自包含运行时。构建机需 .NET SDK 与 .NET
   Framework 4.x 定位包（随 VS/SDK 安装；无定位包时给 csproj 加
   `Microsoft.NETFramework.ReferenceAssemblies` NuGet 包）。
+- **DPI 感知（自 0.1.20）**：宿主声明 **PerMonitorV2**（`host/app.manifest`
+  清单 + `App.config` 的 WinForms `DpiAwareness` 段）。.NET Framework 的
+  WinForms 默认是 DPI 不感知进程，在 125%/150% 等缩放显示器上 Windows 会把
+  窗口按 96 DPI 渲染后整体位图放大（DPI 虚拟化）→ 文字与网页内容发糊；
+  声明感知后按显示器真实 DPI 原生渲染，字迹清晰。
 
 ## 配置
 

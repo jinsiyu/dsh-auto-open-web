@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DshAppWindow 应用清单:
+     .NET Framework 的 WinForms 默认是 DPI 不感知进程,在 125%/150% 等缩放显示器上
+     Windows 会把窗口按 96 DPI 渲染后整体位图放大(DPI 虚拟化)→ 文字与网页内容发糊。
+     这里声明 PerMonitorV2 DPI 感知,让窗口/WebView2 内容按显示器真实 DPI 原生渲染。
+     supportedOS 的 Windows 10 GUID 是 PerMonitorV2 与每显示器 DPI 查询生效的前提。 -->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="DshAppWindow.app" />
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / Windows 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!-- Vista+ 语义:true/pm = 每显示器 DPI 感知 -->
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <!-- Windows 10 1703+ 语义:每显示器 DPI 感知 v2(含非客户区与子窗口缩放) -->
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>

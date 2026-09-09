@@ -73,6 +73,11 @@ cleanup.
   self-contained publish is needed. The build machine needs a .NET SDK and the .NET
   Framework 4.x targeting packs (installed with VS/SDK; without them add the
   `Microsoft.NETFramework.ReferenceAssemblies` NuGet package to the csproj).
+- **DPI awareness (since 0.1.20)**: the host declares **PerMonitorV2** (`host/app.manifest`
+  plus the WinForms `DpiAwareness` section in `App.config`). .NET Framework WinForms is
+  DPI-unaware by default, so on 125%/150% scaled displays Windows renders the window at
+  96 DPI and bitmap-stretches it (DPI virtualization) → blurry text and web content.
+  Declaring awareness renders natively at the monitor's real DPI, keeping text crisp.
 
 ## Configuration
 

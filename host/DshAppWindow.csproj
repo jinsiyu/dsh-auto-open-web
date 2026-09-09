@@ -9,7 +9,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>DshAppWindow</AssemblyName>
     <RootNamespace>DshAppWindow</RootNamespace>
-    <Version>0.1.15</Version>
+    <Version>0.1.20</Version>
+    <!-- DPI 感知清单:PerMonitorV2(.NET Framework WinForms 默认不感知 → 缩放屏上发糊) -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- 嵌入 DSH 图标:窗口/任务栏图标的固定兜底(即使 -icon 缓存缺失,
          WinForms 默认窗图标即 exe 的 ApplicationIcon,不会退化为空白/默认图标)。 -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
