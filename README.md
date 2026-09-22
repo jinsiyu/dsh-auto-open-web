@@ -3,7 +3,9 @@
 > English: [README.en.md](README.en.md)
 
 dsh web profile 启动后自动打开独立应用窗口（或网页标签页）的常驻插件，并在
-设置 → 插件配置中提供配置卡片（手动维护浏览器位置等）。
+设置界面提供配置表单（手动维护浏览器位置等）。**最新版**的配置入口是
+「插件管理」页里本插件**那一行**的配置页；**最新 rc 线（0.1.5-rc.x）**为
+**设置 → 插件配置**卡片。
 
 ## 行为
 
@@ -78,15 +80,31 @@ Job Object（强杀也生效）+ 退出清理结束进程树。
 
 两种途径，等价：
 
-1. **设置页卡片**（推荐）：设置 → 插件配置 → 「自动打开网页」卡片。可编辑
-   `appWindow`（独立应用窗口）、`windowKind`（WebView2 宿主 / 浏览器应用窗口）、
-   `browserPath`（浏览器可执行文件，支持「浏览」原生对话框选择；位于窗口类型
-   下方，仅选择「浏览器应用窗口」时使能）、
+1. **设置表单**（推荐）——两条受支持的版本线，插件**同时**注册、哪条存在就哪条生效：
+   - **最新版（dsh ≥ 0.1.6-alpha，含 0.1.7-alpha.1）**：**「插件管理」页 →
+     `dsh-auto-open-web`（bundle 详情页）**，表单直接显示在该页说明与组件行之间
+     （插槽 `plugins.bundle.config`，key = **bundle 包名**）—— 与 `dsh-harness-tags`
+     同款席位。页面只传 `{ view: 'page' }`，**数据由插件自绑**：命名空间 = 本条目 id，
+     经客户端服务 `configForms` 取 ConfigForm（快照 + `set`/`unset`/订阅）。
+     此形态只有「保存」，**离开页面即丢弃暂存**。
+   - **最新 rc 线（0.1.5-rc.x）**：设置 → 插件配置 → 「自动打开网页」折叠卡片
+     （插槽 `settings.plugin.item`，按设置命名空间 keyed）。数据走宿主
+     `settings.register` + 客户端 `settingsScope`。
+
+   两条线的**客户端服务互不存在**（新版的 `configForms` ↔ rc 线的
+   `settingsScope`），因此插件把这两个服务都改为**惰性读取**、`inject` 只声明
+   两线共有的服务（`slots`/`locale`/`connection`/`remote`）——否则硬注入会让插件
+   在另一条线上永远 pending、设置界面完全不出现。更早的版本（0.1.0-rc.*、
+   0.1.1-rc.*、0.1.2-*/0.1.3-alpha/0.1.5-alpha/0.1.6-alpha.1）**不再保证**。
+
+   两种入口都可编辑 `appWindow`（独立应用窗口）、`windowKind`（WebView2 宿主 /
+   浏览器应用窗口）、`browserPath`（浏览器可执行文件，支持「浏览」原生对话框
+   选择；位于窗口类型下方，仅选择「浏览器应用窗口」时使能）、
    `exitOnWindowClose`（窗口关闭时退出 DSH，默认关闭）。
-   保存后经**官方 settings 域**（客户端 settingsScope）持久化到
-   settings 文档（命名空间 `auto-open-web`），首次保存后设置值优先于行配置；
-   宿主仅保留「浏览」「测试」辅助路由（官方通道无法覆盖的能力）。
-2. **行配置**（cordis.patch.yml）：作为启动种子，设置卡片保存前生效。
+   保存后设置值优先于行配置（新版落在该行的用户层覆盖上，rc 线落在
+   `auto-open-web` 设置命名空间）；宿主仅保留「浏览」「测试」辅助路由
+   （官方通道无法覆盖的能力）。
+2. **行配置**（cordis.patch.yml）：作为启动种子，设置表单保存前生效。
 
 | 字段 | 默认 | 说明 |
 | --- | --- | --- |
@@ -157,8 +175,12 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 安装后:pnpm 将包加入 `profiles/web/node_modules`,`dsh` 把
 `dsh-auto-open-web` 追加到 `dsh.profile.bundles`;启动时 bundle 的
 `cordis.patch.yml` 插入插件行(`name: auto-open-web`,按包名解析)。
-重启 `dsh web` 后设置页出现「自动打开网页」卡片(客户端 bundle 由 modules
-行按 `dsh.client` 声明在启动时扫描进浏览器清单)。
+重启 `dsh web` 后,配置表单出现在对应入口(最新版:「插件管理」页里
+`dsh-auto-open-web` 那一行的配置页;最新 rc 线:设置 → 插件配置卡片)。
+客户端 bundle 由 modules 行按 `dsh.client` 声明在启动时扫描进浏览器清单;
+插件在客户端**同时**向 `plugins.bundle.config`(新)与 `settings.plugin.item`
+(旧)两个插槽注册,由客户端插槽机制决定哪个生效(不存在者保持 pending,
+不报错、不影响另一者)。
 
 生效配置按以下顺序逐层组合(后应用的层按行胜出,整行替换 config 而非深合并):
 每个 bundle 的 patch(按 bundles 列表顺序)→ profile 自己的
@@ -169,10 +191,11 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
 
 - **本包零 dependencies**:所有运行时依赖均由 **DSH 部署提供**,以 optional
   peer 声明(安装无警告):
-  - `@deepseek-ai/dsh`(宿主,声明兼容范围 `>=0.1.0-rc.8 <0.2.0`:
-    自 rc.8 起客户端冻结表移除 `dsh-client-schema-form`、引入
-    `dsh-client-runtime`,本插件的设置卡片与打开行为均依赖该版本;
-    不做运行时版本检测)
+  - `@deepseek-ai/dsh`(宿主,声明兼容范围 **`>=0.1.5-rc.1 <0.2.0`**:
+    覆盖**最新 rc 线(0.1.5-rc.x)**与**最新版(≥0.1.6-alpha,含 0.1.7-alpha.1)**;
+    更早的 0.1.0-rc.*/0.1.1-rc.*/0.1.2-*/0.1.3-alpha/0.1.5-alpha 不再保证。
+    快照 store 统一走 `@deepseek-ai/dsh-client-store`(自 0.1.2-alpha.2 起,
+    rc.8 时代的 `dsh-client-runtime` 回退已移除);不做运行时版本检测)
   - `@deepseek-ai/schemastery`(配置 schema 校验器;运行时解析:常规 import
     优先,其次 Windows 全局 npm 布局下的 DSH 部署副本)
   - `koffi`(仅 Windows 的 Job Object / 进程校验 / 原生对话框;同样运行时
@@ -184,8 +207,27 @@ dsh plugin --profile web remove dsh-auto-open-web   # 同时移除依赖与对�
   (不 require `dsh-client-ui-primitives`,不复刻官方样式表),卡片外壳、
   字段、按钮、输入框、图标全部手写;观感经官方设计令牌变量
   (`--dsw-alias-*` / `--dsw-static-*`)对齐,浅/深色自动跟随主题。
-  仅使用官方公开的数据/机制接口:`settingsScope`(settings 域)、`slots`
-  (插槽)、`locale`(文案)、`dsh-client-runtime`(快照 store)。
+  **维护提示(0.1.26,新版设置投影)**:dsh 0.1.7 起宿主只把**标记为
+  `volatile` 的 Config 字段**投影成设置表单(`dsh-settings` 的 `volatileForm()`
+  对非 volatile 字段直接返回 undefined → `describe()` 里没有本条目 → 页面显示
+  "本部署未提供该设置命名空间")。因此 `lib/index.js` 的 `Config` 四个字段都必须
+  链上 schemastery 的 **`.volatile()`**(官方 `dsh-agent-loop` 同款写法);
+  **不要**写成 `.set('volatile', true)` —— `Schema.prototype.set` 是写 dict 子字段,
+  会把 schema 弄坏、条目 import 失败。
+  0.1.7 把设置命名空间改为"**每 profile 条目一个**"（= 本条目 id），与 bundle
+  席位配套：页面只给 `view`，插件自己经惰性读取的 `configForms` 绑定该命名空间
+  （rc 线同理，用惰性读取的 `settingsScope`）。
+  **维护提示(0.1.22)**:主按钮(保存)必须用**随主题反转**的令牌对
+  `background:var(--dsw-alias-label-primary)` +
+  `color:var(--dsw-alias-bg-layer-3)`(与官方 `PluginConfigForm` 的 save 同款)。
+  深色模式下 `--dsw-alias-brand-primary` 是**近白色**,若沿用不存在的
+  `--dsw-alias-label-inverse`(回退 #fff)会渲染成白字白底、按钮不可见;
+  同理不要引用并不存在的 `--dsw-alias-label-error`(真名是
+  `--dsw-alias-state-error-primary`)。这两条已由 `smoke-client-slots.mjs`
+  断言守护。
+  仅使用官方公开的数据/机制接口:`slots`(插槽)、`locale`(文案)、
+  行 Config 表单(新版,页面下发 `form`)、rc 线的 `settingsScope`
+  (惰性读取)、快照 store。
 - **npm 包已含 WebView2 宿主编译产物**(prepack 编译后发布);**GitHub
   main 分支与源码 checkout 方式不含** `host-publish/`(构建产物被
   .gitignore 忽略):webview2 模式需先在 `node_modules/dsh-auto-open-web`

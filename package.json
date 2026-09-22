@@ -1,6 +1,6 @@
 {
   "name": "dsh-auto-open-web",
-  "version": "0.1.20",
+  "version": "0.1.29",
   "description": "Open the DSH Web GUI in an app-style WebView2 window on profile start, with a settings card for browser paths",
   "repository": {
     "type": "git",
@@ -27,7 +27,6 @@
         "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-api-remotes",
         "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-locale"
       ]
     }
@@ -46,7 +45,7 @@
     "README.en.md"
   ],
   "peerDependencies": {
-    "@deepseek-ai/dsh": ">=0.1.0-rc.8 <0.2.0",
+    "@deepseek-ai/dsh": ">=0.1.5-rc.1 <0.2.0",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "peerDependenciesMeta": {

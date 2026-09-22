@@ -1,8 +1,9 @@
 # dsh-auto-open-web
 
 A persistent plugin for the `dsh web` profile that automatically opens the DSH Web GUI in an app-style
-window (or browser tab) on profile start, with a configuration card under Settings → Plugin
-configuration (manually maintained browser path, etc.).
+window (or browser tab) on profile start, with a configuration form (manually maintained
+browser path, etc.). On dsh ≥ 0.1.5 that entry point is the bundle's detail page on the
+**Plugins page**; on rc.7–0.1.4 it is the **Settings → Plugin configuration** card.
 
 ## Behavior
 
@@ -83,14 +84,33 @@ cleanup.
 
 Two equivalent ways:
 
-1. **Settings card** (recommended): Settings → Plugin configuration → the "自动打开网页"
-   (auto-open web) card. Editable fields:
+1. **Settings form** (recommended) — two supported version lines; the plugin registers for
+   both and whichever exists wins:
+   - **Newest version (dsh ≥ 0.1.6-alpha, incl. 0.1.7-alpha.1)**: **Plugins page →
+     `dsh-auto-open-web` → this plugin's row → Configure**. The form opens per **row**
+     (slot `plugins.row.config`, key `<package name>#<row id>` =
+     `dsh-auto-open-web#auto-open-web`); the page supplies the data
+     (`form = { state, mutate }` — the host-projected row Config snapshot plus atomic
+     writes) and the plugin only draws the controls. Only **Save** is offered — leaving
+     the page drops staged edits.
+   - **Latest rc line (0.1.5-rc.x)**: Settings → Plugin configuration → the "自动打开网页"
+     collapsible card (slot `settings.plugin.item`, keyed by settings namespace). Data goes
+     through the host's `settings.register` plus the client `settingsScope`.
+
+   The two lines' client services **do not coexist** (new `configForms` ↔ rc-line
+   `settingsScope`), so the plugin reads both **lazily** and declares only the shared
+   services in `inject` (`slots`/`locale`/`connection`/`remote`) — a hard inject would leave
+   the plugin pending forever on the other line and the settings UI would never appear.
+   Earlier versions (0.1.0-rc.*, 0.1.1-rc.*, 0.1.2-*, 0.1.3-alpha, 0.1.5-alpha,
+   0.1.6-alpha.1) are **no longer guaranteed**.
+
+   Both entry points edit
    `appWindow` (independent app window), `windowKind` (WebView2 host / browser app window),
    `browserPath` (browser executable, with a native "Browse" file dialog; located below the
    window-type field and enabled only when "Browser app window" is selected),
    `exitOnWindowClose` (exit DSH when the window closes, off by default).
-   After saving, values persist through the **official settings domain** (client `settingsScope`)
-   to the settings document (namespace `auto-open-web`); once saved,
+   After saving, values take precedence over row configuration (on the newest version they land
+   in that row's user layer; on the rc line in the `auto-open-web` settings namespace); once saved,
    settings take precedence over row configuration. The host keeps only the "Browse" / "Test"
    helper routes (capabilities the official channel cannot cover).
 2. **Row configuration** (`cordis.patch.yml`): acts as the startup seed, effective until the
@@ -166,8 +186,12 @@ dsh plugin --profile web remove dsh-auto-open-web   # removes the dependency and
 After installation: pnpm adds the package to `profiles/web/node_modules`, and `dsh` appends
 `dsh-auto-open-web` to `dsh.profile.bundles`; at startup the bundle's `cordis.patch.yml` inserts the
 plugin row (`name: auto-open-web`, resolved by package name). After restarting `dsh web`, the
-"自动打开网页" card appears in the settings page (the client bundle is scanned into the browser
-manifest at startup via the modules line, per the `dsh.client` declaration).
+configuration form shows up at the matching entry point (dsh ≥ 0.1.5: the `dsh-auto-open-web`
+bundle's detail page on the Plugins page; earlier versions: the Settings → Plugin configuration
+card). The client bundle is scanned into the browser manifest at startup via the modules line,
+per the `dsh.client` declaration; on the client the plugin registers into **both**
+`plugins.bundle.config` (new) and `settings.plugin.item` (old), and the slot machinery decides
+which one takes effect (a slot that does not exist stays pending — no error, no interference).
 
 The effective configuration is composed layer by layer in this order (later layers win per row,
 replacing the whole row's config rather than deep-merging): each bundle's patch (in bundles list
@@ -179,10 +203,14 @@ without touching the package.
 
 - **Zero dependencies**: every runtime dependency is provided by the **DSH deployment** and
   declared as an optional peer (no install warnings):
-  - `@deepseek-ai/dsh` (the host; declares the compatibility range `>=0.1.0-rc.8 <0.2.0` —
-    rc.8 removed `dsh-client-schema-form` from the client frozen table and introduced
-    `dsh-client-runtime`; the plugin's settings card and opening behavior depend on that
-    release; no runtime version check is performed)
+  - `@deepseek-ai/dsh` (the host; declares the compatibility range **`>=0.1.5-rc.1 <0.2.0`** —
+    covering the **latest rc line (0.1.5-rc.x)** and the **newest version (≥0.1.6-alpha,
+    incl. 0.1.7-alpha.1)**; older 0.1.0-rc.*/0.1.1-rc.*/0.1.2-*/0.1.3-alpha/0.1.5-alpha
+    releases are no longer guaranteed. The snapshot store uses
+    `@deepseek-ai/dsh-client-store` only — the rc.8-era `dsh-client-runtime` fallback was
+    removed; the client registers the newest version's row slot (`plugins.row.config`) and
+    the rc line's settings slot (`settings.plugin.item`); no runtime version check is
+    performed)
   - `@deepseek-ai/schemastery` (config schema validator; resolved at runtime: normal import
     first, then the DSH deployment copy under the Windows global npm layout)
   - `koffi` (Windows only: Job Object / process verification / native file dialog; same runtime
